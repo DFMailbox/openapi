@@ -4,7 +4,7 @@ externalDocs:
   url: "https://dfmailbox.dev/"
 info:
   title: DFMailbox API
-  version: "0.4.0"
+  version: "0.5.0"
   description: DFMailbox is a decentralized way to send messages to other DiamondFire plots.
 
   license:
@@ -77,21 +77,17 @@ paths:
         '409':
           description: Plot registration error
           content:
-            application/json:
-              example:
-                error: unknown_instance
+            application/problem+json:
               schema:
-                required:
-                  - error
                 oneOf:
-                  - properties:
-                      error:
-                        type: string
-                        const: unknown_instance
-                  - properties:
-                      error:
-                        type: string
-                        const: instance_key_compromised
+                - $ref: '#/components/schemas/UnknownInstanceError'
+                - $ref: '#/components/schemas/InstanceKeyCompromised'
+              example:
+                type: /v0/problems/unknown-instance
+                title: Specified instance has not been identified
+                status: 409
+                details: The instance with address api2.dfmailbox.dev is not identified
+                address: api2.dfmailbox.dev
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -122,25 +118,18 @@ paths:
         '409':
           description: Plot instance instance replacement error
           content:
-            application/json:
-              example:
-                error: plot_not_registered
+            application/problem+json:
               schema:
-                required:
-                  - error
                 oneOf:
-                  - properties:
-                      error:
-                        type: string
-                        const: plot_not_registered
-                  - properties:
-                      error:
-                        type: string
-                        const: unknown_instance
-                  - properties:
-                      error:
-                        type: string
-                        const: instance_key_compromised
+                  - $ref: '#/components/schemas/UnregisteredPlotError'
+                  - $ref: '#/components/schemas/UnknownInstanceError'
+                  - $ref: '#/components/schemas/InstanceKeyCompromised'
+              example:
+                type: /v0/problems/unknown-instance
+                title: Specified instance has not been identified
+                status: 409
+                details: The instance with address api2.dfmailbox.dev is not identified
+                address: api2.dfmailbox.dev
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -160,16 +149,15 @@ paths:
         '409':
           description: Plot deletion error
           content:
-            application/json:
+            application/problem+json:
               schema:
-                required:
-                - error
-                properties:
-                  error:
-                    type: string
-                    const: plot_not_registered
-                example:
-                  error: plot_not_registered
+                $ref: '#/components/schemas/UnregisteredPlotError'
+              example:
+                type: /v0/problems/unregistered-plot
+                title: Target plot is not registered
+                status: 409
+                details: The plot with id 51998 is not registered and can't be unregistered
+                plot_id: 51998
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -441,24 +429,16 @@ paths:
         '400':
           description: Plot doesn't exist
           content:
-            application/json:
-              example:
-                error: plot_not_registered
+            application/problem+json:
               schema:
-                required:
-                - error
-                properties:
-                  error:
-                    const: plot_not_registered
-                example:
-                  error: plot_not_registered
+                $ref: '#/components/schemas/UnregisteredPlotsError'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/ExpectedHostAuth'
     delete:
       summary: Un-trust plots
-      description: Remove trust from plots
+      description: Remove trust from plots. Does not check if plots are trusted or even exist
       operationId: untrustPlot
       security:
         - ApiKey: []
@@ -510,6 +490,10 @@ paths:
                 $ref: '#/components/schemas/Plot'
         '404':
           description: Plot not registered
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnregisteredPlotError'
   /plots/{plot_id}/mailbox:
     post:
       summary: Send an item into another mailbox
@@ -558,9 +542,13 @@ paths:
                     $ref: '#/components/schemas/Address'
         '404':
           description: Unknown instance
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/UnknownInstanceError'
     post:
       summary: Introduce an instance
-      description: Add an instance to this instance's database. 
+      description: Add an instance to this instance's database.
         This will make this instance tell the newly added instance to add itself.
       operationId: introduceInstance
       tags:
@@ -585,46 +573,7 @@ paths:
         '200':
           description: OK
         '400':
-          description: Error introducing instance
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - properties:
-                      error:
-                        const: instance_unreachable
-                      error_message:
-                        $ref: '#/components/schemas/ErrorMessage'
-                    required:
-                      - error
-                      - error_message
-                  - properties:
-                      error:
-                        const: non_compliance
-                      error_message:
-                        $ref: '#/components/schemas/ErrorMessage'
-                    required:
-                      - error
-                      - error_message
-                  - properties:
-                      error:
-                        const: mismatched_address
-                      expected_address:
-                        $ref: '#/components/schemas/Address'
-                    required:
-                      - error
-                      - expected_address
-                  - properties:
-                      error:
-                        const: mismatched_public_key
-                      expected_key:
-                        $ref: '#/components/schemas/PublicKey'
-                    required:
-                      - error
-                      - expected_key
-              example:
-                error: non_compliance
-                error_message: "JSON is not formatted correctly. Bad Json: {...}"
+          $ref: '#/components/responses/InstanceIntroductionError'
 
   /federation/instance:
     get:
@@ -658,13 +607,14 @@ paths:
                   address:
                     $ref: '#/components/schemas/Address'
         '400':
-          description: Challenge is not a uuid
+          # TODO: Add input validation errors
+          description: Input validation error
     post:
       summary: Refresh identity token
       description: Request a new identity token by completing a challenge after being identified
       operationId: refreshToken
       tags:
-        - federation
+      - federation
       requestBody:
         description: A challenge from `POST /federation/challenge` and your public key
         required: true
@@ -693,6 +643,20 @@ paths:
                     example: lksbdgnabgabgfkaisgbewigewkgfdsgbasjbskjf
               example:
                 identity_token: Pheikae3eeghahn8oruire this can literally be anything <128 chars
+        '400':
+          description: Cannot refresh
+          content:
+            application/problem+json:
+              example:
+                type: /v0/problems/invalid-challenge
+                title: Challenge isn't valid
+                offending_challenge: 497dcba3-ecbf-4587-a2dd-5eb0665e6880
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/InvalidChallengeError'
+                  - $ref: '#/components/schemas/ChallengeFailedError'
+                  - $ref: '#/components/schemas/UnknownInstanceError'
+
     delete:
       summary: Mark instance key as compromised
       description: When the private key gets compromised and you have the key, you may "revoke" it.
@@ -726,19 +690,15 @@ paths:
         '400':
           description: Error
           content:
-            application/json:
+            application/problem+json:
               schema:
-                required:
-                - error
                 oneOf:
-                  - properties:
-                      error:
-                        const: challenge_failed
-                  - properties:
-                      error:
-                        const: instance_key_compromised
+                  - $ref: '#/components/schemas/InvalidChallengeError'
+                  - $ref: '#/components/schemas/ChallengeFailedError'
               example:
-                error: challenge_failed
+                type: /v0/problems/challenge-failed
+                title: Failed to complete challenge
+                challenge: 497dcba3-ecbf-4587-a2dd-5eb0665e6880
 
   /federation/challenge:
     post:
@@ -754,11 +714,11 @@ paths:
           content:
             application/json:
               schema:
-                requried:
-                  - challenge
                 properties:
                   challenge:
                     $ref: '#/components/schemas/Uuid'
+                required:
+                  - challenge
   /federation/mailbox:
     post:
       summary: Send mail to a plot
@@ -799,11 +759,15 @@ paths:
         '400':
           description: Failed to send
           content:
-            application/json:
-              example:
-                error: receiver_not_registered
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/CrossInstanceSendError'
+              example:
+                type: /v0/problems/cross-instance-send/sender-not-registered
+                title: Sender is not registered
+                status: 400
+                details: The plot with id 51998 is not registered
+                sender: 51998
 
 components:
   schemas:
@@ -1019,45 +983,238 @@ components:
           required:
             - type
             - msg
+
+    # All things Errors
+    UntrustedPlotError:
+      description: Plot is not trusted
+      properties:
+        type: { const: /v0/problems/untrusted-plot }
+        title: { const: Plot is not trusted }
+        status:
+          $ref: '#/components/schemas/Status'
+        details:
+          type: string
+        plot_id:
+          $ref: '#/components/schemas/PlotId'
+      required:
+      - type
+      - title
+      - details
+      - status
+      - plot_id
+    ChallengeFailedError:
+      description: Failed to complete challenge
+      properties:
+        type: { const: /v0/problems/challenge-failed }
+        title: { const: Failed to complete challenge }
+        status:
+          $ref: '#/components/schemas/Status'
+        challenge:
+          description: Base64 representation of the challenge
+          type: string
+      required:
+      - type
+      - title
+      - status
+      - challenge
+      example:
+        type: /v0/problems/challenge-failed
+        title: Failed to complete challenge
+        challenge: f4ba1dbd-dc5d-4ea8-8693-0f6c81b67248
+        status: 400
+
+    InvalidChallengeError:
+      description: Invalid challenge
+      properties:
+        type: { const: /v0/problems/invalid-challenge }
+        title: { const: Challenge isn't valid }
+        status:
+          $ref: '#/components/schemas/Status'
+        offending_challenge:
+          $ref: '#/components/schemas/Uuid'
+      required:
+      - type
+      - title
+      - status
+      - offending_challenge
+      example:
+        type: /v0/problems/invalid-challenge
+        title: Challenge isn't valid
+        status: 400
+        offending_challenge: 497dcba3-ecbf-4587-a2dd-5eb0665e6880
+    UnregisteredPlotError:
+      description: Plot not registered
+      properties:
+        type: { const: /v0/problems/unregistered-plot }
+        title: { const: Target plot is not registered }
+        status:
+          $ref: '#/components/schemas/Status'
+        details:
+          type: string
+        plot_id:
+          $ref: '#/components/schemas/PlotId'
+      required:
+      - type
+      - title
+      - status
+      - details
+      - plot_id
+    UnregisteredPlotsError:
+      description: Some plots are not registered
+      properties:
+        type: { const: /v0/problems/unregistered-plots }
+        title: { const: Some plots are not registered }
+        status:
+          $ref: '#/components/schemas/Status'
+        details:
+          type: string
+        plot_ids:
+          items:
+            $ref: '#/components/schemas/PlotId'
+      required:
+      - type
+      - title
+      - status
+      - details
+      - plot_ids
     SendItemsError:
       description: An error emitted when a send inside an instance occurs
       oneOf:
-        - properties:
-            error:
-              const: plot_not_trusted
-            expected_key:
-              $ref: '#/components/schemas/PublicKey'
-        - properties:
-            error:
-              const: plot_not_registered
+        - $ref: '#/components/schemas/UntrustedPlotError'
+        - $ref: '#/components/schemas/UnregisteredPlotError'
     CrossInstanceSendError:
-      description: An error emitted when a cross instance send fails
-      required:
-      - error
+      description: An error emitted when a cross instance send fails.
+        All of these errors are emitted in the perspective of this instance.
       oneOf:
-        - properties:
-            error:
-              const: sender_not_registered
-        - properties:
-            error:
-              const: sender_is_owned
-        - properties:
-            error:
-              const: sender_key_mismatch
-            actual_key:
-              $ref: '#/components/schemas/PublicKey'
-          required:
-          - error
-          - actual_key
-        - properties:
-            error:
-              const: receiver_not_registered
-        - properties:
-            error:
-              const: receiver_not_owned
-        - properties:
-            error:
-              const: sender_not_trusted
+      - properties:
+          type: { const: /v0/problems/cross-instance-send/sender-not-registered }
+          title: { const: Sender is not registered }
+          status:
+            $ref: '#/components/schemas/Status'
+          details:
+            type: string
+          sender:
+            $ref: '#/components/schemas/PlotId'
+        required:
+        - type
+        - title
+        - status
+        - details
+        - sender
+      - properties:
+          type: { const: /v0/problems/cross-instance-send/sender-is-owned }
+          title: { const: Plot sender is owned by this instance }
+          status:
+            $ref: '#/components/schemas/Status'
+          details:
+            type: string
+          sender:
+            $ref: '#/components/schemas/PlotId'
+        required:
+        - type
+        - title
+        - status
+        - details
+        - sender
+      - properties:
+          type: { const: /v0/problems/cross-instance-send/sender-key-mismatch }
+          title: { const: Plot sender key does not match sender public key }
+          status:
+            $ref: '#/components/schemas/Status'
+          details:
+            type: string
+          sender:
+            $ref: '#/components/schemas/PlotId'
+          actual_key:
+            $ref: '#/components/schemas/PublicKey'
+        required: 
+        - type
+        - title
+        - status
+        - details
+        - sender
+        - actual_key
+      - properties:
+          type: { const: /v0/problems/cross-instance-send/receiver-not-registered }
+          title: { const: Receiver is not registered }
+          status:
+            $ref: '#/components/schemas/Status'
+          details:
+            type: string
+          receiver:
+            $ref: '#/components/schemas/PlotId'
+        required:
+        - type
+        - title
+        - status
+        - details
+        - receiver
+      - properties:
+          type: { const: /v0/problems/cross-instance-send/receiver-not-owned }
+          title: { const: Receiver is not owned by this instance }
+          status:
+            $ref: '#/components/schemas/Status'
+          details:
+            type: string
+          receiver:
+            $ref: '#/components/schemas/PlotId'
+        required:
+        - type
+        - title
+        - status
+        - details
+        - receiver
+      - properties:
+          type: { const: /v0/problems/cross-instance-send/sender-not-trusted }
+          title: { const: Sender is not trusted }
+          status:
+            $ref: '#/components/schemas/Status'
+          details:
+            type: string
+          sender:
+            $ref: '#/components/schemas/PlotId'
+          receiver:
+            $ref: '#/components/schemas/PlotId'
+        required:
+        - type
+        - title
+        - status
+        - details
+        - sender
+    UnknownInstanceError:
+      description: Unknown instance error
+      properties:
+        type: { const: /v0/problems/unknown-instance }
+        title: { const: Specified instance has not been identified }
+        status:
+          $ref: '#/components/schemas/Status'
+        details:
+          type: string
+        address:
+          type: string
+      required:
+      - type
+      - title
+      - status
+      - details
+      - address
+    InstanceKeyCompromised:
+      description: Instance key has been invalidated therefore being marked as compromised
+      properties:
+        type: { const: /v0/problems/instance-key-compromised }
+        title: { const: Instance key has been compromised } 
+        status:
+          $ref: '#/components/schemas/Status'
+        details:
+          type: string
+        instance_key:
+          $ref: '#/components/schemas/PublicKey'
+      required:
+      - type
+      - title
+      - status
+      - details
+      - instance_key
 
     # Basic schemas
     PublicKey:
@@ -1100,15 +1257,30 @@ components:
           val: "Hello DFMailbox"
         - id: num
           val: 42
-    ErrorMessage:
-      description: A non-standard error message explaining in human terms
-      type: string
     Role:
       description: Possible authentication roles
       enum:
         - unregistered
         - host
         - registered
+    NonComplianceError:
+      description: Shown when another instance isn't complying with the protocol
+      properties:
+        type: { const: /v0/problems/non-compliance }
+        title: { const: The other instance is not complying with protocol }
+        status:
+          $ref: '#/components/schemas/Status'
+        detail:
+          type: string
+      required:
+      - type
+      - title
+      - status
+      - detail
+    Status:
+      description: HTTP status code
+      type: integer
+      example: 400
 
   requestBodies:
     SendItems:
@@ -1143,83 +1315,160 @@ components:
     Unauthorized:
       description: No authorization present
       content:
-        application/json:
+        application/problem+json:
           schema:
             example:
-              error: unauthorized
+              type: https://tools.ietf.org/html/rfc9110#section-15.5.2
+              title: Unauthorized
+              status: 401
             required:
-              - error
+              - type
+              - title
+              - status
             properties:
-              error:
-                const: unauthorized
+              type:
+                const: https://tools.ietf.org/html/rfc9110#section-15.5.2
+              title:
+                const: Unauthorized
+              status:
+                const: 401
+
+    # TODO: Implement expected errors
     ExpectedRegistered:
       description: Expected any registered
       content:
-        application/json:
+        application/problem+json:
           schema:
             required:
-              - error
-              - expected
-              - received
+            - type
+            - title
+            - status
+            - expected
+            - received
             properties:
-              error:
-                const: access_denied
+              type: { const: /v0/problems/expected-role/any }
+              title: { const: Expected any registered role }
+              status:
+                $ref: '#/components/schemas/Status'
               expected:
                 const:
                   - host
                   - registered
               received:
-                $ref: '#/components/schemas/Role'
+                const: unregistered
             example:
-              error: access_denied
+              type: /v0/problems/expected-role/any
+              title: Expected any registered role
+              status: 403
               expected:
-                  - host
-                  - registered
+                - host
+                - registered
               received: unregistered
     ExpectedUnregistered:
       description: Expected unregistered
       content:
-        application/json:
+        application/problem+json:
           schema:
             required:
-              - error
-              - expected
-              - received
+            - type
+            - title
+            - status
+            - expected
+            - received
             properties:
-              error:
-                const: access_denied
+              type: { const: /v0/problems/expected-role/unregistered }
+              title: { const: Expected no registion }
+              status:
+                $ref: '#/components/schemas/Status'
               expected:
                 const:
                   - unregistered
               received:
                 $ref: '#/components/schemas/Role'
             example:
-              error: access_denied
+              type: /v0/problems/expected-role/unregistered
+              title: Expected no registion
+              status: 403
               expected:
-                  - unregistered
+                - unregistered
               received: host
     ExpectedHostAuth:
       description: Expected host auth
       content:
-        application/json:
+        application/problem+json:
           schema:
             required:
-              - error
-              - expected
-              - received
+            - type
+            - title
+            - status
+            - expected
+            - received
             properties:
-              error:
-                const: access_denied
+              type: { const: /v0/problems/expected-role/host }
+              title: { const: Expected host auth }
+              status:
+                $ref: '#/components/schemas/Status'
               expected:
                 const:
                   - host
               received:
                 $ref: '#/components/schemas/Role'
             example:
-              error: access_denied
+              type: /v0/problems/expected-role/host
+              title: Expected host auth
+              status: 403
               expected:
-                  - host
+                - host
               received: unregistered
+
+    InstanceIntroductionError:
+      description: Error introducing instance
+      content:
+        application/problem+json:
+          schema:
+            oneOf:
+            - $ref: "#/components/schemas/NonComplianceError"
+            - properties:
+                type: { const: /v0/problems/instance-introduction/instance-unreachable }
+                title: { const: Cannot reach the introduced instance }
+                status:
+                  $ref: '#/components/schemas/Status'
+                detail:
+                  type: string
+              required:
+              - type
+              - title
+              - detail
+              - status
+            - properties:
+                type: { const: /v0/problems/instance-introduction/mismatched-address }
+                title: { const: Provided address does not match server's primary addess }
+                status:
+                  $ref: '#/components/schemas/Status'
+                expected_address:
+                  $ref: '#/components/schemas/Address'
+              required:
+              - type
+              - title
+              - status
+              - expected_address
+            - properties:
+                type: { const: /v0/problems/instance-introduction/mismatched-public-key }
+                title: { const: Provided public key does not match server's public key }
+                status:
+                  $ref: '#/components/schemas/Status'
+                expected_key:
+                  $ref: '#/components/schemas/PublicKey'
+              required:
+              - type
+              - title
+              - status
+              - expected_public_key
+          example:
+            type: /v0/problems/instance-introduction/mismatched-public-key
+            title: Provided public key does not match server's public key
+            status: 400
+            expected_public_key: dfm.example.com
 
   parameters:
     PlotId:
