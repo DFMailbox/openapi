@@ -87,7 +87,7 @@ paths:
                 title: Specified instance has not been identified
                 status: 409
                 details: The instance with address api2.dfmailbox.dev is not identified
-                address: api2.dfmailbox.dev
+                public_key: k2k4r4+0nqH2kJLWxfqdH0QIsKJp84Ck9OhPWCHZ3uM
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -231,8 +231,8 @@ paths:
   /plot/query:
     post:
       summary: Run mailbox query
-      description: Runs a list of mailbox queries and returns the result in the same order as 
-        Usually this is ran by a plot's polling due to the rate limiting as of writing this api. 
+      description: Runs a list of mailbox queries and returns the result in the same order.
+        Usually this is ran automatically by the provided dfmailbox library.
         It doesn't really make sense to hit this endpoint in a non DF plot context.
       operationId: query
       security:
@@ -324,11 +324,11 @@ paths:
                       description: Unix timestamp of creation
                       type: integer
                       format: int64
-              example:
-                - hashed_key: fh2ZUxgDyPv1a0BudAlkRUDDM7u7HG/qeXD2pqXzA48=
-                  created_at: 1749445121
-                - hashed_key: QLhmwfU2vtwuOGNFjMQKFDh6ILp+qtSufalOjX13iv0=
-                  created_at: 1749257047
+                examples:
+                  - hashed_key: fh2ZUxgDyPv1a0BudAlkRUDDM7u7HG/qeXD2pqXzA48=
+                    created_at: 1749445121
+                  - hashed_key: QLhmwfU2vtwuOGNFjMQKFDh6ILp+qtSufalOjX13iv0=
+                    created_at: 1749257047
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -426,12 +426,19 @@ paths:
       responses:
         '200':
           description: OK
-        '400':
+        '409':
           description: Plot doesn't exist
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/UnregisteredPlotsError'
+              example:
+                type: /v0/problems/unregistered-plots
+                title: Some plots are not registered
+                status: 409
+                details: The plot with id 51998 is not registered
+                plot_ids:
+                  - 51998
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -450,6 +457,7 @@ paths:
           description: A list of comma separated plots to un-trust, empty means un-trust all
           in: query
           required: false
+          example: 51998,51999
           schema:
             description: Space separated plotIds
             type: string
@@ -511,6 +519,18 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/SendItemsResult'
+        '400':
+          description: Plot not registered
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/CrossInstanceSendError'
+              example:
+                type: /v0/problems/unregistered-plot
+                title: Target plot is not registered
+                status: 400
+                details: The plot with id 51998 is not registered and can't be unregistered
+                plot_id: 51998
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1190,14 +1210,14 @@ components:
           $ref: '#/components/schemas/Status'
         details:
           type: string
-        address:
-          type: string
+        public_key:
+          $ref: '#/components/schemas/PublicKey'
       required:
       - type
       - title
       - status
       - details
-      - address
+      - public_key
     InstanceKeyCompromised:
       description: Instance key has been invalidated therefore being marked as compromised
       properties:
@@ -1215,7 +1235,12 @@ components:
       - status
       - details
       - instance_key
-
+      example:
+        type: /v0/problems/instance-key-compromised
+        title: Instance key has been compromised
+        status: 409
+        details: The instance key has been compromised
+        instance_key: k2k4r4+0nqH2kJLWxfqdH0QIsKJp84Ck9OhPWCHZ3uM
     # Basic schemas
     PublicKey:
       description: A base64 URL encoded ed25519 public key
@@ -1333,7 +1358,6 @@ components:
               status:
                 const: 401
 
-    # TODO: Implement expected errors
     ExpectedRegistered:
       description: Expected any registered
       content:
@@ -1483,7 +1507,7 @@ components:
       description: The id to get messages after
       in: query
       required: true
-      example: 0
+      example: 3
       schema:
         $ref: '#/components/schemas/MailboxItemId'
     MessageLimit:
