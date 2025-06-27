@@ -4,7 +4,7 @@ externalDocs:
   url: "https://dfmailbox.dev/"
 info:
   title: DFMailbox API
-  version: "0.6.2"
+  version: "0.6.3"
   description: DFMailbox is a decentralized way to send messages to other DiamondFire plots.
 
   license:
@@ -556,16 +556,21 @@ paths:
             application/json:
               schema:
                 oneOf:
-                  - $ref: '#/components/schemas/AddressKeyPair'
+                  - properties:
+                      instance:
+                        $ref: '#/components/schemas/NullableAddressKeyPair'
+                    required:
+                    - instance
                   - properties:
                       instances:
                         items:
                           $ref: '#/components/schemas/AddressKeyPair'
                     required:
-                      - instances
+                    - instances
                 example:
-                  address: api.dfmailbox.dev
-                  public_key: NyLVuL731FWGnQ4tD-RqWNcC4pFQ_eD0dDr2z0FHmxs
+                  instance:
+                    address: api.dfmailbox.dev
+                    public_key: NyLVuL731FWGnQ4tD-RqWNcC4pFQ_eD0dDr2z0FHmxs
 
         '400':
           description: Invalid public key
@@ -1041,6 +1046,26 @@ components:
             - msg
     AddressKeyPair:
       description: Addess and key
+      type: object
+      properties:
+        address:
+          $ref: '#/components/schemas/Address'
+        public_key:
+          $ref: '#/components/schemas/PublicKey'
+      required:
+      - address
+      - public_key
+
+    # For some gosh darn reason
+    # type:
+    # - $ref: '#/component/schemas/AddressKeyPair'
+    # - 'null'
+    # Is not allowed leading to the creation of this
+    NullableAddressKeyPair:
+      description: Addess and key
+      type:
+      - object
+      - 'null'
       properties:
         address:
           $ref: '#/components/schemas/Address'
