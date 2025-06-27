@@ -4,7 +4,7 @@ externalDocs:
   url: "https://dfmailbox.dev/"
 info:
   title: DFMailbox API
-  version: "0.6.1"
+  version: "0.6.2"
   description: DFMailbox is a decentralized way to send messages to other DiamondFire plots.
 
   license:
@@ -556,19 +556,16 @@ paths:
             application/json:
               schema:
                 oneOf:
+                  - $ref: '#/components/schemas/AddressKeyPair'
                   - properties:
-                      address:
-                        $ref: '#/components/schemas/Address'
-                    required:
-                      - address
-                  - properties:
-                      addresses:
+                      instances:
                         items:
-                          $ref: '#/components/schemas/Address'
+                          $ref: '#/components/schemas/AddressKeyPair'
                     required:
-                      - addresses
-
-
+                      - instances
+                example:
+                  address: api.dfmailbox.dev
+                  public_key: NyLVuL731FWGnQ4tD-RqWNcC4pFQ_eD0dDr2z0FHmxs
 
         '400':
           description: Invalid public key
@@ -1042,6 +1039,16 @@ components:
           required:
             - type
             - msg
+    AddressKeyPair:
+      description: Addess and key
+      properties:
+        address:
+          $ref: '#/components/schemas/Address'
+        public_key:
+          $ref: '#/components/schemas/PublicKey'
+      required:
+        - address
+        - public_key
 
     # All things Errors
     InvalidRequestParameterError:
