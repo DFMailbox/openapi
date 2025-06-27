@@ -35,8 +35,8 @@ paths:
       description: Returns the general information of the plot. Doesn't return the trusted plots.
       operationId: getPlotInfo
       security:
-        - ApiKey: []
-        - Plot: []
+        - ApiKey: [ ]
+        - Plot: [ ]
       tags:
         - plot
       responses:
@@ -56,8 +56,8 @@ paths:
       operationId: registerPlot
       description: Register the authenticated plot
       security:
-        - ApiKey: []
-        - Plot: []
+        - ApiKey: [ ]
+        - Plot: [ ]
       tags:
         - plot
       requestBody:
@@ -67,7 +67,7 @@ paths:
           application/json:
             schema:
               required:
-              - instance
+                - instance
               properties:
                 instance:
                   $ref: '#/components/schemas/InstanceKey'
@@ -80,8 +80,8 @@ paths:
             application/problem+json:
               schema:
                 oneOf:
-                - $ref: '#/components/schemas/UnknownInstanceError'
-                - $ref: '#/components/schemas/InstanceKeyCompromisedError'
+                  - $ref: '#/components/schemas/UnknownInstanceError'
+                  - $ref: '#/components/schemas/InstanceKeyCompromisedError'
               example:
                 type: /v0/problems/unknown-instance
                 title: Specified instance has not been identified
@@ -97,8 +97,8 @@ paths:
       description: Change the instance public key. If the key is null, all the mailbox contents and trusted plots will be deleted.
       operationId: updateInstance
       security:
-        - ApiKey: []
-        - Plot: []
+        - ApiKey: [ ]
+        - Plot: [ ]
       tags:
         - plot
       requestBody:
@@ -139,8 +139,8 @@ paths:
       description: If this plot was previously owned by this instance, all the mailbox contents and trusted plots will be deleted.
       operationId: unregisterPlot
       security:
-        - ApiKey: []
-        - Plot: []
+        - ApiKey: [ ]
+        - Plot: [ ]
       tags:
         - plot
       responses:
@@ -168,13 +168,13 @@ paths:
       description: Gets items with an id that is greated than msg_id
       operationId: checkMailbox
       security:
-        - ApiKey: []
-        - Plot: []
+        - ApiKey: [ ]
+        - Plot: [ ]
       tags:
         - plot
       parameters:
-      - $ref: '#/components/parameters/MessageId'
-      - $ref: '#/components/parameters/MessageLimit'
+        - $ref: '#/components/parameters/MessageId'
+        - $ref: '#/components/parameters/MessageLimit'
       responses:
         '200':
           description: OK
@@ -191,8 +191,8 @@ paths:
       description: Append a list of items to the back of the mailbox
       operationId: sendMailToSelf
       security:
-        - ApiKey: []
-        - Plot: []
+        - ApiKey: [ ]
+        - Plot: [ ]
       tags:
         - plot
       requestBody:
@@ -210,13 +210,13 @@ paths:
       description: Gets items with an id that is greated than msg_id and deletes items that are less than or equal to msg_id. This prevents the mailbox from being filled with useless data.
       operationId: checkCleanMailbox
       security:
-        - ApiKey: []
-        - Plot: []
+        - ApiKey: [ ]
+        - Plot: [ ]
       tags:
         - plot
       parameters:
-      - $ref: '#/components/parameters/MessageId'
-      - $ref: '#/components/parameters/MessageLimit'
+        - $ref: '#/components/parameters/MessageId'
+        - $ref: '#/components/parameters/MessageLimit'
       responses:
         '200':
           description: OK
@@ -236,8 +236,8 @@ paths:
         It doesn't really make sense to hit this endpoint in a non DF plot context.
       operationId: query
       security:
-        - ApiKey: []
-        - Plot: []
+        - ApiKey: [ ]
+        - Plot: [ ]
       tags:
         - plot
       requestBody:
@@ -302,8 +302,8 @@ paths:
       description: Return all non revoked SHA256 hashed API keys
       operationId: getApiKeyHashes
       security:
-        - ApiKey: []
-        - Plot: []
+        - ApiKey: [ ]
+        - Plot: [ ]
       tags:
         - plot
       responses:
@@ -314,8 +314,8 @@ paths:
               schema:
                 items:
                   required:
-                  - hashed_key
-                  - created_at
+                    - hashed_key
+                    - created_at
                   properties:
                     hashed_key:
                       description: SHA256 hashed key encoded in base64
@@ -338,8 +338,8 @@ paths:
       description: Generate an API key (any random string of utf-8 bytes) while storing a hashed version. Once lost, the key cannot be recovered.
       operationId: createApiKey
       security:
-        - ApiKey: []
-        - Plot: []
+        - ApiKey: [ ]
+        - Plot: [ ]
       tags:
         - plot
       responses:
@@ -367,8 +367,8 @@ paths:
       description: Revokes every api key including the one you are using. This only revokes keys on this instance.
       operationId: revokeAllApiKeys
       security:
-        - ApiKey: []
-        - Plot: []
+        - ApiKey: [ ]
+        - Plot: [ ]
       tags:
         - plot
       responses:
@@ -384,8 +384,8 @@ paths:
       description: List all plot ids that are trusted
       operationId: getTrusted
       security:
-        - ApiKey: []
-        - Plot: []
+        - ApiKey: [ ]
+        - Plot: [ ]
       tags:
         - plot
       responses:
@@ -408,8 +408,8 @@ paths:
       description: Add plots to trust list
       operationId: trustPlots
       security:
-        - ApiKey: []
-        - Plot: []
+        - ApiKey: [ ]
+        - Plot: [ ]
       tags:
         - plot
       requestBody:
@@ -448,8 +448,8 @@ paths:
       description: Remove trust from plots. Does not check if plots are trusted or even exist
       operationId: untrustPlot
       security:
-        - ApiKey: []
-        - Plot: []
+        - ApiKey: [ ]
+        - Plot: [ ]
       tags:
         - plot
       parameters:
@@ -483,8 +483,8 @@ paths:
       description: Returns the general information of the plot. Doesn't return the trusted plots.
       operationId: lookupPlot
       security:
-        - ApiKey: []
-        - Plot: []
+        - ApiKey: [ ]
+        - Plot: [ ]
       tags:
         - plot
       parameters:
@@ -508,8 +508,8 @@ paths:
       description: Sends an item to another mailbox. This mailbox can be from another instance.
       operationId: sendMail
       security:
-        - ApiKey: []
-        - Plot: []
+        - ApiKey: [ ]
+        - Plot: [ ]
       tags:
         - plot
       parameters:
@@ -556,19 +556,19 @@ paths:
             application/json:
               schema:
                 oneOf:
-                - properties:
-                  address:
-                    $ref: '#/components/schemas/Address'
-                  required:
-                  - address
-                - properties:
-                    addresses:
-                      items:
+                  - properties:
+                      address:
                         $ref: '#/components/schemas/Address'
-                  required:
-                  - addresses
+                    required:
+                      - address
+                  - properties:
+                      addresses:
+                        items:
+                          $ref: '#/components/schemas/Address'
+                    required:
+                      - addresses
 
-                  
+
 
         '400':
           description: Invalid public key
@@ -596,7 +596,7 @@ paths:
                 status: 409
                 detail: The instance with key NyLVuL731FWGnQ4tD-RqWNcC4pFQ_eD0dDr2z0FHmxs is not identified
                 public_key: NyLVuL731FWGnQ4tD-RqWNcC4pFQ_eD0dDr2z0FHmxs
-        
+
     post:
       summary: Introduce an instance
       description: Add an instance to this instance's database.
@@ -611,8 +611,8 @@ paths:
           application/json:
             schema:
               required:
-              - public_key
-              - address
+                - public_key
+                - address
               properties:
                 public_key:
                   description: Public key of the instance you wish to introduce
@@ -655,9 +655,9 @@ paths:
             application/json:
               schema:
                 required:
-                - public_key
-                - signature
-                - address
+                  - public_key
+                  - signature
+                  - address
                 properties:
                   public_key:
                     $ref: '#/components/schemas/PublicKey'
@@ -673,7 +673,7 @@ paths:
       description: Request a new identity token by completing a challenge after being identified
       operationId: refreshToken
       tags:
-      - federation
+        - federation
       requestBody:
         description: A challenge from `POST /federation/challenge` and your public key
         required: true
@@ -681,8 +681,8 @@ paths:
           application/json:
             schema:
               required:
-              - challenge
-              - signature
+                - challenge
+                - signature
               properties:
                 challenge:
                   $ref: '#/components/schemas/Uuid'
@@ -695,7 +695,7 @@ paths:
             application/json:
               schema:
                 required:
-                - identity_token
+                  - identity_token
                 properties:
                   identity_token:
                     type: string
@@ -783,7 +783,7 @@ paths:
       summary: Send mail to a plot
       description: Send mail to a plot this instance owns
       security:
-        - Identity: []
+        - Identity: [ ]
       operationId: crossSend
       tags:
         - federation
@@ -794,9 +794,9 @@ paths:
           application/json:
             schema:
               required:
-              - from
-              - to
-              - data
+                - from
+                - to
+                - data
               properties:
                 from:
                   $ref: '#/components/schemas/PlotId'
@@ -811,7 +811,7 @@ paths:
             application/json:
               schema:
                 required:
-                - msg_id
+                  - msg_id
                 properties:
                   msg_id:
                     $ref: '#/components/schemas/MailboxItemId'
