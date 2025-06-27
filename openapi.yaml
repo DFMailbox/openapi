@@ -4,7 +4,7 @@ externalDocs:
   url: "https://dfmailbox.dev/"
 info:
   title: DFMailbox API
-  version: "0.6.3"
+  version: "0.6.4"
   description: DFMailbox is a decentralized way to send messages to other DiamondFire plots.
 
   license:
@@ -1049,7 +1049,7 @@ components:
       type: object
       properties:
         address:
-          $ref: '#/components/schemas/Address'
+          $ref: '#/components/schemas/NullableAddress'
         public_key:
           $ref: '#/components/schemas/PublicKey'
       required:
@@ -1068,7 +1068,7 @@ components:
       - 'null'
       properties:
         address:
-          $ref: '#/components/schemas/Address'
+          $ref: '#/components/schemas/NullableAddress'
         public_key:
           $ref: '#/components/schemas/PublicKey'
       required:
@@ -1365,6 +1365,13 @@ components:
     Address:
       description: An address pointing to another DFMailbox instance
       type: string
+      example: "api.dfmailbox.dev"
+    NullableAddress:
+      description: An nullable address pointing to another DFMailbox instance. 
+        Null, in this case meaning the instance is compromised.
+      type: 
+      - string
+      - 'null'
       example: "api.dfmailbox.dev"
     Uuid:
       type: string
