@@ -4,7 +4,7 @@ externalDocs:
   url: "https://dfmailbox.dev/"
 info:
   title: DFMailbox API
-  version: "0.6.4"
+  version: "0.6.5"
   description: DFMailbox is a decentralized way to send messages to other DiamondFire plots.
 
   license:
@@ -558,7 +558,7 @@ paths:
                 oneOf:
                   - properties:
                       instance:
-                        $ref: '#/components/schemas/NullableAddressKeyPair'
+                        $ref: '#/components/schemas/MaybeAddressKeyPair'
                     required:
                     - instance
                   - properties:
@@ -1049,7 +1049,7 @@ components:
       type: object
       properties:
         address:
-          $ref: '#/components/schemas/NullableAddress'
+          $ref: '#/components/schemas/MaybeAddress'
         public_key:
           $ref: '#/components/schemas/PublicKey'
       required:
@@ -1061,14 +1061,14 @@ components:
     # - $ref: '#/component/schemas/AddressKeyPair'
     # - 'null'
     # Is not allowed leading to the creation of this
-    NullableAddressKeyPair:
-      description: Addess and key
+    MaybeAddressKeyPair:
+      description: Address and key
       type:
       - object
       - 'null'
       properties:
         address:
-          $ref: '#/components/schemas/NullableAddress'
+          $ref: '#/components/schemas/MaybeAddress'
         public_key:
           $ref: '#/components/schemas/PublicKey'
       required:
@@ -1366,7 +1366,7 @@ components:
       description: An address pointing to another DFMailbox instance
       type: string
       example: "api.dfmailbox.dev"
-    NullableAddress:
+    MaybeAddress:
       description: An nullable address pointing to another DFMailbox instance. 
         Null, in this case meaning the instance is compromised.
       type: 
