@@ -4,7 +4,7 @@ externalDocs:
   url: "https://dfmailbox.dev/"
 info:
   title: DFMailbox API
-  version: "0.6.0"
+  version: "0.6.1"
   description: DFMailbox is a decentralized way to send messages to other DiamondFire plots.
 
   license:
@@ -555,11 +555,21 @@ paths:
           content:
             application/json:
               schema:
-                required:
-                - address
-                properties:
+                oneOf:
+                - properties:
                   address:
                     $ref: '#/components/schemas/Address'
+                  required:
+                  - address
+                - properties:
+                    addresses:
+                      items:
+                        $ref: '#/components/schemas/Address'
+                  required:
+                  - addresses
+
+                  
+
         '400':
           description: Invalid public key
           content:
@@ -1055,7 +1065,6 @@ components:
       - title
       - status
       - detail
-      - errors
 
     NoEffectUpdateError:
       description: Generic error for nothing happening
