@@ -4,7 +4,7 @@ externalDocs:
   url: "https://dfmailbox.dev/"
 info:
   title: DFMailbox API
-  version: "0.7.0"
+  version: "0.7.1"
   description: DFMailbox is a decentralized way to send messages to other DiamondFire plots.
 
   license:
@@ -1467,31 +1467,16 @@ components:
         application/json:
           schema:
             items:
-              properties:
-                id:
-                  $ref: '#/components/schemas/MailboxItemId'
-                time:
-                  type: integer
-                  format: int64
-                  description: The unix timestamp of creation
-                plot_origin:
-                  $ref: '#/components/schemas/PlotId'
-                val:
-                  $ref: '#/components/schemas/Json'
-              required:
-                - id
-                - time
-                - plot_origin
-                - val
+              $ref: '#/components/schemas/MailboxItem'
           example:
-            - id: 10
-              time: 1649866772
+            - msg_id: 10
+              timestamp: 1649866772
               plot_origin: 43780
               val: 
                 id: str
                 val: "Hello DFMailbox"
-            - id: 11
-              time: 1649866774
+            - msg_id: 11
+              timestamp: 1649866774
               plot_origin: 43780
               val:
                 id: vec
