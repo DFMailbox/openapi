@@ -4,7 +4,7 @@ externalDocs:
   url: "https://dfmailbox.dev/"
 info:
   title: DFMailbox API
-  version: "0.6.5"
+  version: "0.7.0"
   description: DFMailbox is a decentralized way to send messages to other DiamondFire plots.
 
   license:
@@ -74,6 +74,20 @@ paths:
       responses:
         '201':
           description: OK
+        '400':
+          description: Input validation error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/InvalidRequestParameterError'
+              example:
+                type: /v0/problems/invalid-request-parameter-format
+                title: Invalid request parameter format
+                status: 400
+                detail: The request parameter is not valid
+                errors:
+                  - detail: The public key abc123haha is not a valid base64 URL encoded ed25519 public key
+                    parameter: instance
         '409':
           description: Plot registration error
           content:
@@ -121,7 +135,6 @@ paths:
             application/problem+json:
               schema:
                 oneOf:
-                  - $ref: '#/components/schemas/UnregisteredPlotError'
                   - $ref: '#/components/schemas/UnknownInstanceError'
                   - $ref: '#/components/schemas/InstanceKeyCompromisedError'
               example:
@@ -146,18 +159,6 @@ paths:
       responses:
         '200':
           description: OK
-        '409':
-          description: Plot deletion error
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/UnregisteredPlotError'
-              example:
-                type: /v0/problems/unregistered-plot
-                title: Target plot is not registered
-                status: 409
-                detail: The plot with id 51998 is not registered and can't be unregistered
-                plot_id: 51998
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -188,7 +189,7 @@ paths:
           $ref: '#/components/responses/ExpectedHostAuth'
     post:
       summary: Send items to mailbox
-      description: Append a list of items to the back of the mailbox
+      description: Append a list of items to the back of the mailbox. Usually this is used for debugging.
       operationId: sendMailToSelf
       security:
         - ApiKey: [ ]
@@ -210,13 +211,19 @@ paths:
       description: Gets items with an id that is greated than msg_id and deletes items that are less than or equal to msg_id. This prevents the mailbox from being filled with useless data.
       operationId: checkCleanMailbox
       security:
-        - ApiKey: [ ]
-        - Plot: [ ]
+      - ApiKey: [ ]
+      - Plot: [ ]
       tags:
-        - plot
+      - plot
       parameters:
         - $ref: '#/components/parameters/MessageId'
         - $ref: '#/components/parameters/MessageLimit'
+        - name: return
+          description: Should check mailbox, defaults to true
+          in: header
+          required: false
+          schema:
+            type: boolean
       responses:
         '200':
           description: OK
@@ -635,6 +642,21 @@ paths:
           description: OK
         '400':
           $ref: '#/components/responses/InstanceIntroductionError'
+        '409':
+          description: Conflict
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/AlreadyExistsError'
+                - $ref: '#/components/schemas/NoEffectUpdateError'
+              example:
+                type: /v0/problems/already-exists
+                title: The resource being created already exists
+                status: 409
+                detail: The resource with key NyLVuL731FWGnQ4tD-RqWNcC4pFQ_eD0dDr2z0FHmxs is already registered
+                public_key: NyLVuL731FWGnQ4tD-RqWNcC4pFQ_eD0dDr2z0FHmxs
+
 
   /federation/instance:
     get:
@@ -1445,14 +1467,38 @@ components:
         application/json:
           schema:
             items:
-              $ref: '#/components/schemas/Json'
+              properties:
+                id:
+                  $ref: '#/components/schemas/MailboxItemId'
+                time:
+                  type: integer
+                  format: int64
+                  description: The unix timestamp of creation
+                plot_origin:
+                  $ref: '#/components/schemas/PlotId'
+                val:
+                  $ref: '#/components/schemas/Json'
+              required:
+                - id
+                - time
+                - plot_origin
+                - val
           example:
-            - id: str
-              val: "Hello DFMailbox"
-            - id: vec
-              x: 1
-              y: 2
-              z: 3
+            - id: 10
+              time: 1649866772
+              plot_origin: 43780
+              val: 
+                id: str
+                val: "Hello DFMailbox"
+            - id: 11
+              time: 1649866774
+              plot_origin: 43780
+              val:
+                id: vec
+                x: 1
+                y: 2
+                z: 3
+
   responses:
     SendItemsResult:
       description: Sent
@@ -1501,7 +1547,7 @@ components:
             - received
             properties:
               type: { const: /v0/problems/expected-role/any }
-              title: { const: Expected any registered role }
+              title: { const: Expected any registration }
               status:
                 $ref: '#/components/schemas/Status'
               expected:
@@ -1512,7 +1558,7 @@ components:
                 const: unregistered
             example:
               type: /v0/problems/expected-role/any
-              title: Expected any registered role
+              title: Expected any registration
               status: 403
               expected:
                 - host
@@ -1559,7 +1605,7 @@ components:
             - received
             properties:
               type: { const: /v0/problems/expected-role/host }
-              title: { const: Expected host auth }
+              title: { const: Expected host registration }
               status:
                 $ref: '#/components/schemas/Status'
               expected:
@@ -1583,8 +1629,6 @@ components:
             oneOf:
             - $ref: '#/components/schemas/NonComplianceError'
             - $ref: '#/components/schemas/InstanceUnreachableError'
-            - $ref: '#/components/schemas/AlreadyExistsError'
-            - $ref: '#/components/schemas/NoEffectUpdateError'
             - properties:
                 type: { const: /v0/problems/instance-introduction/mismatched-address }
                 title: { const: Provided address does not match server's primary address }
